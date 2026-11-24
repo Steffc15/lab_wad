@@ -79,12 +79,21 @@ def read(image, boxes):
 
 
 # ---------- 3. MATCH: which student is it? ----------
+NOT_A_NAME = r"\b\d{3,4}[A-Z]{0,2}\b|\bERASMUS\b|\bOCT\b"  # group codes, "ERASMUS", the month
+
+
+def without_initials(name):
+    """'OMER H. Genan' -> 'OMER Genan': nobody writes their initials on the sheet."""
+    return " ".join(w for w in name.replace(".", " ").split() if len(w) > 1)
+
+
 def match(image, boxes, roster):
     matches = []
     for box in boxes:
+        text = re.sub(NOT_A_NAME, " ", box["text"])
         best_name, best_sim = None, 0
         for name in roster:
-            sim = common.similarity(box["text"], name)
+            sim = common.similarity(text, without_initials(name))
             if sim > best_sim:
                 best_name, best_sim = name, sim
         matches.append({"text": box["text"], "name": best_name, "similarity": best_sim})
