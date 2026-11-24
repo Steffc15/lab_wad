@@ -18,7 +18,7 @@ from rapidfuzz import fuzz
 
 import common
 
-ENLARGE = 2.0   # make the photo bigger before searching (small writing is found more easily)
+ENLARGE = 1.4   # enlarge before searching; tested 1.25-3.0, 1.4 gave the best score on this sheet
 PADDING = 0     # no margin: rows are close together, a margin pulls in the neighbouring rows (6 -> 0: 120 -> 135)
 MIN_SIZE = 20   # boxes smaller than this (pixels) are dots or scribbles, not writing
 
