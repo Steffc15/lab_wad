@@ -17,7 +17,7 @@ from PIL import ImageDraw
 import common
 
 ENLARGE = 2.0   # make the photo bigger before searching (small writing is found more easily)
-PADDING = 6     # pixels of margin when cutting out a piece of writing
+PADDING = 0     # no margin: rows are close together, a margin pulls in the neighbouring rows (6 -> 0: 120 -> 135)
 # TRY: other values for ENLARGE (1.5, 3) and PADDING (0, 12). Easiest points of all!
 
 
