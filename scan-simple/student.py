@@ -18,7 +18,7 @@ import common
 
 ENLARGE = 2.0   # make the photo bigger before searching (small writing is found more easily)
 PADDING = 0     # no margin: rows are close together, a margin pulls in the neighbouring rows (6 -> 0: 120 -> 135)
-# TRY: other values for ENLARGE (1.5, 3) and PADDING (0, 12). Easiest points of all!
+MIN_SIZE = 20   # boxes smaller than this (pixels) are dots or scribbles, not writing
 
 
 # ---------- picture of each step ----------
@@ -41,10 +41,12 @@ def show(image, boxes, step):
 
 # ---------- 1. FIND: where is the writing? ----------
 def find(image):
-    boxes = [{"rect": rect} for rect in common.find_text(image)]
+    rects = common.find_text(image)
 
-    # TRY: remove tiny boxes (dots, scribbles), e.g. smaller than 20 pixels
+    # Remove tiny boxes (dots, scribbles): too narrow or too short to be a name.
+    rects = [r for r in rects if r[2] - r[0] >= MIN_SIZE and r[3] - r[1] >= MIN_SIZE]
 
+    boxes = [{"rect": rect} for rect in rects]
     show(image, boxes, "1_find")
     return boxes
 
