@@ -14,6 +14,7 @@ import re
 from pathlib import Path
 
 from PIL import ImageDraw
+from rapidfuzz import fuzz
 
 import common
 
@@ -87,13 +88,19 @@ def without_initials(name):
     return " ".join(w for w in name.replace(".", " ").split() if len(w) > 1)
 
 
+def name_similarity(text, name):
+    """Normal similarity, or (slightly discounted) one that ignores extra words on the line."""
+    ignoring_extra = fuzz.token_set_ratio(common.plain(text), common.plain(name))
+    return max(common.similarity(text, name), 0.9 * ignoring_extra)
+
+
 def match(image, boxes, roster):
     # Similarity of every box with every student.
     pairs = []
     for i, box in enumerate(boxes):
         text = re.sub(NOT_A_NAME, " ", box["text"])
         for name in roster:
-            pairs.append((common.similarity(text, without_initials(name)), i, name))
+            pairs.append((name_similarity(text, without_initials(name)), i, name))
 
     # A student is on the sheet only once: hand out the best pairs first, each name only once.
     chosen, used = {}, set()
