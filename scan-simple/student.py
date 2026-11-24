@@ -10,6 +10,7 @@ Everything already works, in a simple way. Your job: raise the SCORE.
 Change one thing, run again, look at the pictures in outputs/. Hints: "TRY".
 """
 
+import re
 from pathlib import Path
 
 from PIL import ImageDraw
@@ -52,15 +53,26 @@ def find(image):
 
 
 # ---------- 2. READ: what does each box say? ----------
+LOOKS_LIKE = str.maketrans({"0": "O", "1": "I", "5": "S", "8": "B"})
+
+
+def fix_word(word):
+    """A digit inside a mostly-letter word is a misread letter: 'M1HNEA' -> 'MIHNEA'.
+    Mostly-digit words like the group code '1241EB' are left alone."""
+    letters = sum(c.isalpha() for c in word)
+    digits = sum(c.isdigit() for c in word)
+    return word.translate(LOOKS_LIKE) if letters > digits else word
+
+
 def read(image, boxes):
     for box in boxes:
         piece = common.cut(image, box["rect"], PADDING)
-        box["text"], box["confidence"] = common.read_text(piece)
+        text, box["confidence"] = common.read_text(piece)
+        text = re.sub(r"^\W*\d{1,2}\s*[).]", "", text)  # drop the row number "4)" first: its digit is real
+        # Names are written in CAPITALS; then fix digits that are really letters.
+        box["text"] = " ".join(fix_word(w) for w in text.upper().split())
         box["label"] = f"{box['text']}  ({box['confidence']:.2f})"
         box["colour"] = "green" if box["confidence"] > 0.8 else "red"
-
-    # TRY: names are written in CAPITALS -> make all text uppercase
-    # TRY: digits inside a name are misread letters: "M1HNEA" -> "MIHNEA" (0->O, 1->I, 5->S)
 
     show(image, boxes, "2_read")
     return boxes
