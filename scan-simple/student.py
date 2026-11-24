@@ -88,21 +88,26 @@ def without_initials(name):
 
 
 def match(image, boxes, roster):
-    matches = []
-    for box in boxes:
+    # Similarity of every box with every student.
+    pairs = []
+    for i, box in enumerate(boxes):
         text = re.sub(NOT_A_NAME, " ", box["text"])
-        best_name, best_sim = None, 0
         for name in roster:
-            sim = common.similarity(text, without_initials(name))
-            if sim > best_sim:
-                best_name, best_sim = name, sim
-        matches.append({"text": box["text"], "name": best_name, "similarity": best_sim})
-        box["label"] = f"{best_name}  {best_sim:.0f}%"
-        box["colour"] = "green" if best_sim >= common.SURE else "orange" if best_sim >= common.MAYBE else "red"
+            pairs.append((common.similarity(text, without_initials(name)), i, name))
 
-    # TRY: remove what is not a name before comparing: "4)", group codes "1241EB", "ERASMUS"
-    # TRY: roster names have initials ("OMER H. Genan") nobody writes -> leave them out
-    # TRY: one student can only be on the sheet once -> don't give the same name to two boxes
+    # A student is on the sheet only once: hand out the best pairs first, each name only once.
+    chosen, used = {}, set()
+    for sim, i, name in sorted(pairs, reverse=True):
+        if i not in chosen and name not in used and sim >= common.MAYBE:
+            chosen[i] = (name, sim)
+            used.add(name)
+
+    matches = []
+    for i, box in enumerate(boxes):
+        name, sim = chosen.get(i, (None, 0))
+        matches.append({"text": box["text"], "name": name, "similarity": sim})
+        box["label"] = f"{name}  {sim:.0f}%" if name else "nobody"
+        box["colour"] = "green" if sim >= common.SURE else "orange" if name else "red"
 
     show(image, boxes, "3_match")
     return matches
